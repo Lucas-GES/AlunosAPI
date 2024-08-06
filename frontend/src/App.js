@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import logoCadastro from './assets/cadastro.png';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function App() {
 
@@ -12,6 +12,9 @@ function App() {
   const [data, setData] = useState([]);
   const [modalIncluir, setModalIncluir]=useState(false);
   const [modalEditar, setModalEditar]=useState(false);
+  const [modalExcluir, setModalExcluir]=useState(false);
+  // Controlar atualização dos dados em useEffect
+  const [updateData, setUpdateData] =useState(true);
   const [alunoSelecionado, setAlunoSelecionado] = useState(
   {
     id: '',
@@ -20,12 +23,23 @@ function App() {
     idade: ''
   })
 
+  useEffect(()=>{    
+    if(updateData){
+      pedidoGet();    
+      setUpdateData(false);
+    }
+  },[updateData])
+
   const abrirFecharModalIncluir=()=>{
     setModalIncluir(!modalIncluir);
   }
 
   const abrirFecharModalEditar=()=>{
     setModalEditar(!modalEditar);
+  }
+
+  const abrirFecharModalExcluir=()=>{
+    setModalExcluir(!modalExcluir);
   }
 
   const handleChange = e=>{
@@ -45,21 +59,22 @@ function App() {
     })
   }
 
+  const selecionarAluno=(aluno, opcao)=>{
+      setAlunoSelecionado(aluno);
+      (opcao === "Editar") ? abrirFecharModalEditar() : abrirFecharModalExcluir();
+  }
+
   const pedidoPost = async()=>{
     delete alunoSelecionado.id;
     alunoSelecionado.idade=parseInt(alunoSelecionado.idade);
     await axios.post(baseUrl, alunoSelecionado)
     .then(response => {
       setData(data.concat(response.data));
+      setUpdateData(true);
       abrirFecharModalIncluir();
     }).catch(error=>{
       console.log(error);
     })
-  }
-
-  const selecionarAluno=(aluno, opcao)=>{
-    setAlunoSelecionado(aluno);
-    (opcao === "Editar") && abrirFecharModalEditar()
   }
 
   const pedidoPut = async()=>{    
@@ -75,15 +90,23 @@ function App() {
           aluno.idade=resposta.idade;
         }
       });      
+      setUpdateData(true);
       abrirFecharModalEditar();
     }).catch(error=>{
       console.log(error);
     })
-  }
+  }  
 
-  useEffect(()=>{
-    pedidoGet();
-  })
+  const pedidoDelete = async()=>{
+    await axios.delete(baseUrl+"/"+alunoSelecionado.id)
+      .then(response=>{
+        setData(data.filter(aluno => aluno.id !== response.data));
+        setUpdateData(true);
+        abrirFecharModalExcluir();
+      }).catch(error => {
+        console.log(error);
+      })
+  }
 
   return (
     <div className="aluno-container">
@@ -173,6 +196,17 @@ function App() {
           <button className="btn btn-danger" onClick={()=>abrirFecharModalEditar()}>Cancelar</button>
         </ModalFooter>
       </Modal>
+
+      <Modal isOpen={modalExcluir}>
+          <ModalBody>
+              Confirma a exclusão deste(a) aluno(a) : {alunoSelecionado && alunoSelecionado.nome} ? 
+          </ModalBody>
+          <ModalFooter>
+            <button className="btn btn-danger" onClick={()=>pedidoDelete()}>Sim</button>
+            <button className="btn btn-secondary" onClick={()=>abrirFecharModalExcluir()}>Não</button>
+          </ModalFooter>
+      </Modal>
+
     </div>
   );
 }
