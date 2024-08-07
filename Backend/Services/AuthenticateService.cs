@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Services
@@ -10,10 +6,12 @@ namespace Backend.Services
     {
 
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<IdentityUser> _userInManager;
 
-        public AuthenticateService(SignInManager<IdentityUser> signInManager)
+        public AuthenticateService(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userInManager)
         {
             _signInManager = signInManager;
+            _userInManager = userInManager;
         }
 
         public async Task<bool> Authenticate(string email, string password)
@@ -26,6 +24,24 @@ namespace Backend.Services
         public async Task Logout()
         {
             await _signInManager.SignOutAsync();
+        }
+
+        public async Task<bool> RegisterUser(string email, string password)
+        {
+            var appUser = new IdentityUser
+            {
+                UserName = email,
+                Email = email,
+            };
+
+            var result = await _userInManager.CreateAsync(appUser, password);
+
+            if (result.Succeeded)
+            {
+                await _signInManager.SignInAsync(appUser, isPersistent: false);
+            }
+            return result.Succeeded;
+
         }
     }
 }
