@@ -12,7 +12,7 @@ export default function Alunos() {
                 <span>
                     Bem-Vindo, <strong>Luck</strong>!
                 </span>
-                <Link className="button" to="aluno/novo">
+                <Link className="button" to="aluno/novo/0">
                     Novo Aluno
                 </Link>
                 <button type="button">
