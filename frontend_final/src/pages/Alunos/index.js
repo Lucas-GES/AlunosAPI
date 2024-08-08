@@ -6,35 +6,42 @@ import logoCadastro from "../../assets/cadastro.png";
 import api from "../../services/api";
 
 export default function Alunos() {
+    const [nome, setNome] = useState("");
+    const [alunos, setAlunos] = useState([]);
 
-    const[nome, setNome] = useState('');
-    const[alunos, setAlunos] = useState([]);
-
-    const email = localStorage.getItem('email');
-    const token = localStorage.getItem('token');
+    const email = localStorage.getItem("email");
+    const token = localStorage.getItem("token");
 
     const history = useNavigate();
 
     const authorization = {
-        headers : {
-            Authorization: `Bearer ${token}`
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
+
+    useEffect(() => {
+        api.get("api/alunos", authorization).then((response) => {
+            setAlunos(response.data);
+        }, token);
+    });
+
+    async function logout() {
+        try {
+            localStorage.clear();
+            localStorage.setItem("token", "");
+            authorization.headers = "";
+            history("/");
+        } catch (error) {
+            alert("Não foi possível fazer o logout");
         }
     }
 
-    useEffect(()=> {
-        api.get('api/alunos', authorization).then(
-            response=> {setAlunos(response.data);
-            },token)
-    })
-
-    async function logout(){
+    async function editAluno(id) {
         try {
-            localStorage.clear();
-            localStorage.setItem('token', '');
-            authorization.headers = '';
-            history('/');
+            history(`aluno/novo/${id}`);
         } catch (error) {
-            alert('Não foi possível fazer o logout')
+            alert('Não foi possível editar o aluno')
         }
     }
 
@@ -60,18 +67,27 @@ export default function Alunos() {
             </form>
             <h1>Relação de Alunos</h1>
             <ul>
-                {alunos.map(aluno=>(
+                {alunos.map((aluno) => (
                     <li key={aluno.id}>
-                        <b>Nome:</b>{aluno.nome}<br /><br />
-                        <b>Email:</b>{aluno.email}<br /><br />
-                        <b>Idade:</b>{aluno.idade}<br /><br />
+                        <b>Nome:</b>
+                        {aluno.nome}
+                        <br />
+                        <br />
+                        <b>Email:</b>
+                        {aluno.email}
+                        <br />
+                        <br />
+                        <b>Idade:</b>
+                        {aluno.idade}
+                        <br />
+                        <br />
 
-                        <button type="button">
-                            <FiEdit size="25" color="#17202a"/>
+                        <button onClick={() => editAluno(aluno.id)} type="button">
+                            <FiEdit size="25" color="#17202a" />
                         </button>
 
                         <button type="button">
-                            <FiUserX size="25" color="#17202a"/>
+                            <FiUserX size="25" color="#17202a" />
                         </button>
                     </li>
                 ))}
